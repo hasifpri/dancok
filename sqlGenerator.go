@@ -1,5 +1,7 @@
 package dancok
 
+import "strconv"
+
 type SqlGenerator struct {
 	TableName           string
 	DefaultFieldForSort string
@@ -137,7 +139,7 @@ func (g *SqlGenerator) ParsePaging(param SelectParameter) string {
 	} else {
 		startRowIndex := (param.PageDescriptor.PageIndex * param.PageDescriptor.PageSize) + 1
 		endRowIndex := (param.PageDescriptor.PageIndex + 1) * param.PageDescriptor.PageSize
-		pagingText = " where RowNumber between " + string(startRowIndex) + " and " + string(endRowIndex)
+		pagingText = " where RowNumber between " + strconv.FormatInt(int64(startRowIndex), 10) + " and " + strconv.FormatInt(int64(endRowIndex), 10)
 	}
 	return pagingText
 }
