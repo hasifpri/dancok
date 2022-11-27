@@ -26,7 +26,7 @@ func (g *SqlGenerator) Parse(param SelectParameter) string {
 func (g *SqlGenerator) ParseFilter(param SelectParameter) string {
 	filterText := ""
 	if len(param.FilterDescriptors) > 0 {
-		filterText := " WHERE "
+		filterText = " WHERE "
 		isFirstFilter := true
 		for _, filter := range param.FilterDescriptors {
 			if isFirstFilter {
@@ -56,11 +56,11 @@ func (g *SqlGenerator) ParseFilter(param SelectParameter) string {
 			case IsContain:
 				filterText = filterText + " LIKE '%" + filter.Value.(string) + "%'"
 			case IsBeginWith:
-				filterText = filterText + " LIKE '%" + filter.Value.(string) + "'"
-			case IsEndWith:
 				filterText = filterText + " LIKE '" + filter.Value.(string) + "%'"
+			case IsEndWith:
+				filterText = filterText + " LIKE '%" + filter.Value.(string) + "'"
 			case IsBetween:
-				filterText = filterText + " BETWEEN " + filter.Value.(string) + " AND " + filter.Value2.(string)
+				filterText = filterText + " BETWEEN '" + filter.Value.(string) + "' AND '" + filter.Value2.(string) + "'"
 			case IsIn:
 				filterText = filterText + " IN (" + ParseRangeValues(filter.RangeValues) + ")"
 			case IsNotIn:
@@ -76,7 +76,7 @@ func (g *SqlGenerator) ParseFilter(param SelectParameter) string {
 				if filterText == "" {
 					filterText = " WHERE ("
 				} else {
-					filterText = filterText + string(filter.Condition) + " ("
+					filterText = filterText + " " + string(filter.Condition) + " ("
 				}
 				isFirstCompositeFilter = false
 			} else {
@@ -92,34 +92,34 @@ func (g *SqlGenerator) ParseFilter(param SelectParameter) string {
 				if isFirstItem {
 					switch opt := item.Operator; opt {
 					case IsEqual:
-						filterText = filterText + " = '" + item.Value.(string) + "'"
+						filterText = filterText + item.FieldName + " = '" + item.Value.(string) + "'"
 					case IsNotEqual:
-						filterText = filterText + " != '" + item.Value.(string) + "'"
+						filterText = filterText + item.FieldName + " != '" + item.Value.(string) + "'"
 					case IsLessThan:
-						filterText = filterText + " < " + item.Value.(string)
+						filterText = filterText + item.FieldName + " < " + item.Value.(string)
 					case IsLessThanOrEqual:
-						filterText = filterText + " <= " + item.Value.(string)
+						filterText = filterText + item.FieldName + " <= " + item.Value.(string)
 					case IsMoreThan:
-						filterText = filterText + " > " + item.Value.(string)
+						filterText = filterText + item.FieldName + " > " + item.Value.(string)
 					case IsMoreThanOrEqual:
-						filterText = filterText + " >= " + item.Value.(string)
+						filterText = filterText + item.FieldName + " >= " + item.Value.(string)
 					}
 
 					isFirstItem = false
 				} else {
 					switch opt := item.Operator; opt {
 					case IsEqual:
-						filterText = string(filter.GroupFilterDescriptor.Condition) + filterText + " = '" + item.Value.(string) + "'"
+						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + item.FieldName + " = '" + item.Value.(string) + "'"
 					case IsNotEqual:
-						filterText = string(filter.GroupFilterDescriptor.Condition) + filterText + " != '" + item.Value.(string) + "'"
+						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + item.FieldName + " != '" + item.Value.(string) + "'"
 					case IsLessThan:
-						filterText = string(filter.GroupFilterDescriptor.Condition) + filterText + " < " + item.Value.(string)
+						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + item.FieldName + " < " + item.Value.(string)
 					case IsLessThanOrEqual:
-						filterText = string(filter.GroupFilterDescriptor.Condition) + filterText + " <= " + item.Value.(string)
+						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + item.FieldName + " <= " + item.Value.(string)
 					case IsMoreThan:
-						filterText = string(filter.GroupFilterDescriptor.Condition) + filterText + " > " + item.Value.(string)
+						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + item.FieldName + " > " + item.Value.(string)
 					case IsMoreThanOrEqual:
-						filterText = string(filter.GroupFilterDescriptor.Condition) + filterText + " >= " + item.Value.(string)
+						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + item.FieldName + " >= " + item.Value.(string)
 					}
 				}
 			}
@@ -175,7 +175,7 @@ func ParseRangeValues(values []any) string {
 	valueText := ""
 	if len(values) > 0 {
 		isFirstValue := true
-		_, isStringType := values[0].([]string)
+		_, isStringType := values[0].(string)
 		if isStringType {
 			for _, v := range values {
 				if isFirstValue {
