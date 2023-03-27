@@ -16,31 +16,14 @@ func NewBsonDGenerator(defaultFieldForSort string) *BsonDGenerator {
 func (g *BsonDGenerator) ParseFilter(param SelectParameter) primitive.D {
 	bsonFilter := bson.D{}
 	if len(param.FilterDescriptors) > 0 {
-		isFirstFilter := true
 		for _, filter := range param.FilterDescriptors {
-			if isFirstFilter {
-				bsonFilter = append(bsonFilter, bson.E{Key: filter.FieldName, Value: bson.D{bson.E{Key: g.GetOperator(filter.Operator), Value: filter.Value}}})
-				isFirstFilter = false
-			} else {
-				if filter.Condition == And {
-					bsonFilter = append(bsonFilter, bson.E{Key: filter.FieldName, Value: bson.D{bson.E{Key: g.GetOperator(filter.Operator), Value: filter.Value}}})
-				} else { // OR
-					//Todo
-					//bsonFilter = append(bsonFilter, bson.E{Key: "$or", Value: bson.A{bson.E{Key: filter.FieldName, Value: bson.D{bson.E{Key: g.GetOperator(filter.Operator), Value: filter.Value}}}}})
-				}
-			}
+			bsonFilter = append(bsonFilter, bson.E{Key: filter.FieldName, Value: bson.D{bson.E{Key: g.GetOperator(filter.Operator), Value: filter.Value}}})
 		}
 	}
 
 	if len(param.CompositeFilterDescriptors) > 0 {
-		//isFirstCompositeFilter := true
 		bsonA := bson.A{}
 		for _, filter := range param.CompositeFilterDescriptors {
-			// if isFirstCompositeFilter {
-			// 	isFirstCompositeFilter = false
-			// } else {
-
-			// }
 			isFirstItem := true
 			for _, item := range filter.GroupFilterDescriptor.Items {
 				if isFirstItem {
