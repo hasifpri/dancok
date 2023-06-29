@@ -17,7 +17,26 @@ func (g *BsonDGenerator) ParseFilter(param SelectParameter) primitive.D {
 	bsonFilter := bson.D{}
 	if len(param.FilterDescriptors) > 0 {
 		for _, filter := range param.FilterDescriptors {
-			bsonFilter = append(bsonFilter, bson.E{Key: filter.FieldName, Value: bson.D{bson.E{Key: g.GetOperator(filter.Operator), Value: filter.Value}}})
+			if filter.Operator == IsContain {
+				bsonFilter = append(bsonFilter, bson.E{Key: filter.FieldName, Value: bson.M{
+					"$regex":   filter.Value,
+					"$options": "i",
+				}})
+			} else if filter.Operator == IsBeginWith {
+				val := "^" + filter.Value.(string)
+				bsonFilter = append(bsonFilter, bson.E{Key: filter.FieldName, Value: bson.M{
+					"$regex":   val,
+					"$options": "i",
+				}})
+			} else if filter.Operator == IsEndWith {
+				val := filter.Value.(string) + "$"
+				bsonFilter = append(bsonFilter, bson.E{Key: filter.FieldName, Value: bson.M{
+					"$regex":   val,
+					"$options": "i",
+				}})
+			} else {
+				bsonFilter = append(bsonFilter, bson.E{Key: filter.FieldName, Value: bson.D{bson.E{Key: g.GetOperator(filter.Operator), Value: filter.Value}}})
+			}
 		}
 	}
 
