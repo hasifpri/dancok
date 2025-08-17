@@ -1,5 +1,5 @@
-module github.com/bytesaddict/dancok
+module github.com/hasifpri/dancok
 
 go 1.18
 
-require go.mongodb.org/mongo-driver v1.11.3 // indirect
+require go.mongodb.org/mongo-driver v1.11.3
