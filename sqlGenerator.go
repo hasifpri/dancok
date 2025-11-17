@@ -20,21 +20,51 @@ func (g *SqlGenerator) Generate(param SelectParameter, tableName string) string 
 	return result
 }
 
-func (g *SqlGenerator) GenerateJoin(param SelectParameter, tableName, conditionJoin, selectData string) (string, string) {
+func (g *SqlGenerator) GenerateJoin(param SelectParameter, tableName, conditionJoin, selectData string, groupBy ...string) (string, string) {
 	limit, offset := g.GeneratePageOFFSET(param)
 
-	result := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param, "T") + " LIMIT " + limit + " OFFSET " + offset
+	groupByClause := ""
+	if len(groupBy) > 0 && groupBy[0] != "" {
+		groupByClause = " GROUP BY " + groupBy[0]
+	}
 
-	resultCount := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param, "T")
+	result := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + groupByClause + ") AS T " + g.ParseFilter(param, "T") + " LIMIT " + limit + " OFFSET " + offset
+
+	resultCount := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + groupByClause + ") AS T " + g.ParseFilter(param, "T")
 	return result, resultCount
 }
 
-func (g *SqlGenerator) GenerateLeftJoin(param SelectParameter, tableName, conditionJoin, selectData string) (string, string) {
+func (g *SqlGenerator) GenerateLeftJoin(
+	param SelectParameter,
+	tableName, conditionJoin, selectData string,
+	groupBy ...string,
+) (string, string) {
+
 	limit, offset := g.GeneratePageOFFSET(param)
 
-	result := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " LEFT JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param, "T") + " LIMIT " + limit + " OFFSET " + offset
+	groupByClause := ""
+	if len(groupBy) > 0 && groupBy[0] != "" {
+		groupByClause = " GROUP BY " + groupBy[0]
+	}
 
-	resultCount := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param, "T")
+	// Base select
+	result := "SELECT * FROM (" +
+		"SELECT ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") AS RowNumber, " +
+		selectData + " FROM " + g.TableName +
+		" LEFT JOIN " + conditionJoin +
+		groupByClause +
+		") AS T " +
+		g.ParseFilter(param, "T") +
+		" LIMIT " + limit + " OFFSET " + offset
+
+	resultCount := "SELECT * FROM (" +
+		"SELECT ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") AS RowNumber, " +
+		selectData + " FROM " + g.TableName +
+		" LEFT JOIN " + conditionJoin +
+		groupByClause +
+		") AS T " +
+		g.ParseFilter(param, "T")
+
 	return result, resultCount
 }
 
