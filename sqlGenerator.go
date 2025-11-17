@@ -14,10 +14,14 @@ func NewSqlGenerator(tableName string, defaultFieldForSort string) *SqlGenerator
 	return &SqlGenerator{tableName, defaultFieldForSort}
 }
 
-func (g *SqlGenerator) Generate(param SelectParameter, tableName string) string {
-	result := ""
-	result = "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber,* from " + g.TableName + " " + g.ParseFilter(param, tableName) + ") T " + g.ParsePaging(param)
-	return result
+func (g *SqlGenerator) Generate(param SelectParameter, tableName string) (string, string) {
+
+	limit, offset := g.GeneratePageOFFSET(param)
+
+	result := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber,* from \"" + g.TableName + "\" " + g.ParseFilter(param, tableName) + ") AS T LIMIT " + limit + " OFFSET " + offset
+
+	resultCount := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber,* from \"" + g.TableName + "\" " + g.ParseFilter(param, tableName) + ") AS T"
+	return result, resultCount
 }
 
 func (g *SqlGenerator) GenerateJoin(param SelectParameter, tableName, conditionJoin, selectData string, groupBy ...string) (string, string) {
