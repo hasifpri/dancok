@@ -1,6 +1,9 @@
 package dancok
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 type SqlGenerator struct {
 	TableName           string
@@ -11,51 +14,47 @@ func NewSqlGenerator(tableName string, defaultFieldForSort string) *SqlGenerator
 	return &SqlGenerator{tableName, defaultFieldForSort}
 }
 
-func (g *SqlGenerator) Generate(param SelectParameter) string {
+func (g *SqlGenerator) Generate(param SelectParameter, tableName string) string {
 	result := ""
-	result = "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param) + ") as RowNumber,* from " + g.TableName + " " + g.ParseFilter(param) + ") T " + g.ParsePaging(param)
+	result = "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber,* from " + g.TableName + " " + g.ParseFilter(param, tableName) + ") T " + g.ParsePaging(param)
 	return result
 }
 
-func (g *SqlGenerator) GenerateJoin(param core.QueryInfo, tableName, conditionJoin, selectData string) (string, string) {
+func (g *SqlGenerator) GenerateJoin(param SelectParameter, tableName, conditionJoin, selectData string) (string, string) {
 	limit, offset := g.GeneratePageOFFSET(param)
 
-	result := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param.SelectParameter, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param.SelectParameter, "T") + " LIMIT " + limit + " OFFSET " + offset
+	result := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param, "T") + " LIMIT " + limit + " OFFSET " + offset
 
-	resultCount := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param.SelectParameter, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param.SelectParameter, "T")
+	resultCount := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param, "T")
 	return result, resultCount
 }
 
-func (g *SqlGenerator) GenerateLeftJoin(param core.QueryInfo, tableName, conditionJoin, selectData string) (string, string) {
+func (g *SqlGenerator) GenerateLeftJoin(param SelectParameter, tableName, conditionJoin, selectData string) (string, string) {
 	limit, offset := g.GeneratePageOFFSET(param)
 
-	result := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param.SelectParameter, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " LEFT JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param.SelectParameter, "T") + " LIMIT " + limit + " OFFSET " + offset
+	result := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " LEFT JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param, "T") + " LIMIT " + limit + " OFFSET " + offset
 
-	resultCount := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param.SelectParameter, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param.SelectParameter, "T")
+	resultCount := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param, "T")
 	return result, resultCount
 }
 
-func (g *SqlGenerator) Parse(param SelectParameter) string {
-	result := g.ParseFilter(param) + g.ParseSort(param)
+func (g *SqlGenerator) Parse(param SelectParameter, tableName string) string {
+	result := g.ParseFilter(param, tableName) + g.ParseSort(param, tableName)
 
 	return result
 }
 
-func (g *SqlGenerator) ParseFilter(param SelectParameter) string {
+func (g *SqlGenerator) ParseFilter(param SelectParameter, tableName string) string {
 	filterText := ""
 	if len(param.FilterDescriptors) > 0 {
 		filterText = " WHERE "
 		isFirstFilter := true
 		for _, filter := range param.FilterDescriptors {
 			if isFirstFilter {
-				filterText = filterText + filter.FieldName
+				filterText = filterText + tableName + "." + filter.FieldName
 				isFirstFilter = false
 			} else {
-				if filter.Condition == And {
-					filterText = filterText + " AND " + filter.FieldName
-				} else {
-					filterText = filterText + " OR " + filter.FieldName
-				}
+				filterText = filterText + " AND " + tableName + "." + filter.FieldName
 			}
 
 			switch opt := filter.Operator; opt {
@@ -122,34 +121,34 @@ func (g *SqlGenerator) ParseFilter(param SelectParameter) string {
 				if isFirstItem {
 					switch opt := item.Operator; opt {
 					case IsEqual:
-						filterText = filterText + item.FieldName + " = '" + item.Value.(string) + "'"
+						filterText = filterText + tableName + "." + item.FieldName + " = '" + item.Value.(string) + "'"
 					case IsNotEqual:
-						filterText = filterText + item.FieldName + " != '" + item.Value.(string) + "'"
+						filterText = filterText + tableName + "." + item.FieldName + " != '" + item.Value.(string) + "'"
 					case IsLessThan:
-						filterText = filterText + item.FieldName + " < " + item.Value.(string)
+						filterText = filterText + tableName + "." + item.FieldName + " < " + item.Value.(string)
 					case IsLessThanOrEqual:
-						filterText = filterText + item.FieldName + " <= " + item.Value.(string)
+						filterText = filterText + tableName + "." + item.FieldName + " <= " + item.Value.(string)
 					case IsMoreThan:
-						filterText = filterText + item.FieldName + " > " + item.Value.(string)
+						filterText = filterText + tableName + "." + item.FieldName + " > " + item.Value.(string)
 					case IsMoreThanOrEqual:
-						filterText = filterText + item.FieldName + " >= " + item.Value.(string)
+						filterText = filterText + tableName + "." + item.FieldName + " >= " + item.Value.(string)
 					}
 
 					isFirstItem = false
 				} else {
 					switch opt := item.Operator; opt {
 					case IsEqual:
-						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + item.FieldName + " = '" + item.Value.(string) + "'"
+						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + tableName + "." + item.FieldName + " = '" + item.Value.(string) + "'"
 					case IsNotEqual:
-						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + item.FieldName + " != '" + item.Value.(string) + "'"
+						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + tableName + "." + item.FieldName + " != '" + item.Value.(string) + "'"
 					case IsLessThan:
-						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + item.FieldName + " < " + item.Value.(string)
+						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + tableName + "." + item.FieldName + " < " + item.Value.(string)
 					case IsLessThanOrEqual:
-						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + item.FieldName + " <= " + item.Value.(string)
+						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + tableName + "." + item.FieldName + " <= " + item.Value.(string)
 					case IsMoreThan:
-						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + item.FieldName + " > " + item.Value.(string)
+						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + tableName + "." + item.FieldName + " > " + item.Value.(string)
 					case IsMoreThanOrEqual:
-						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + item.FieldName + " >= " + item.Value.(string)
+						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + tableName + "." + item.FieldName + " >= " + item.Value.(string)
 					}
 				}
 			}
@@ -174,7 +173,7 @@ func (g *SqlGenerator) ParsePaging(param SelectParameter) string {
 	return pagingText
 }
 
-func (g *SqlGenerator) ParseSort(param SelectParameter) string {
+func (g *SqlGenerator) ParseSort(param SelectParameter, tableName string) string {
 	sortText := " "
 
 	if len(param.SortDescriptors) > 0 {
@@ -182,10 +181,10 @@ func (g *SqlGenerator) ParseSort(param SelectParameter) string {
 		sortText = sortText + "order by"
 		for _, sort := range param.SortDescriptors {
 			if isFirstSort {
-				sortText = sortText + " " + sort.FieldName
+				sortText = sortText + " " + tableName + "." + sort.FieldName
 				isFirstSort = false
 			} else {
-				sortText = sortText + "," + sort.FieldName
+				sortText = sortText + "," + tableName + "." + sort.FieldName
 			}
 
 			if sort.SortDirection == Ascending {
@@ -227,4 +226,17 @@ func ParseRangeValues(values []any) string {
 		}
 	}
 	return valueText
+}
+
+func (g *SqlGenerator) GeneratePageOFFSET(param SelectParameter) (string, string) {
+
+	var limit string
+	if param.PageDescriptor.PageSize != -1 {
+		limit = fmt.Sprintf("%d", param.PageDescriptor.PageSize)
+	} else {
+		limit = fmt.Sprintf("%s", "ALL")
+	}
+	offset := fmt.Sprintf("%d", param.PageDescriptor.PageSize*(param.PageDescriptor.PageIndex-1))
+
+	return limit, offset
 }
