@@ -17,6 +17,24 @@ func (g *SqlGenerator) Generate(param SelectParameter) string {
 	return result
 }
 
+func (g *SqlGenerator) GenerateJoin(param core.QueryInfo, tableName, conditionJoin, selectData string) (string, string) {
+	limit, offset := g.GeneratePageOFFSET(param)
+
+	result := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param.SelectParameter, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param.SelectParameter, "T") + " LIMIT " + limit + " OFFSET " + offset
+
+	resultCount := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param.SelectParameter, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param.SelectParameter, "T")
+	return result, resultCount
+}
+
+func (g *SqlGenerator) GenerateLeftJoin(param core.QueryInfo, tableName, conditionJoin, selectData string) (string, string) {
+	limit, offset := g.GeneratePageOFFSET(param)
+
+	result := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param.SelectParameter, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " LEFT JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param.SelectParameter, "T") + " LIMIT " + limit + " OFFSET " + offset
+
+	resultCount := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param.SelectParameter, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + ") AS T " + g.ParseFilter(param.SelectParameter, "T")
+	return result, resultCount
+}
+
 func (g *SqlGenerator) Parse(param SelectParameter) string {
 	result := g.ParseFilter(param) + g.ParseSort(param)
 
@@ -65,6 +83,18 @@ func (g *SqlGenerator) ParseFilter(param SelectParameter) string {
 				filterText = filterText + " IN (" + ParseRangeValues(filter.RangeValues) + ")"
 			case IsNotIn:
 				filterText = filterText + " NOT IN (" + ParseRangeValues(filter.RangeValues) + ")"
+			case IsLessThanOrEqualDate:
+				if len(filter.Value.(string)) == 10 {
+					filterText = filterText + " <= '" + filter.Value.(string) + " 23:59:59'"
+				} else {
+					filterText = filterText + " <= '" + filter.Value.(string) + "'"
+				}
+			case IsMoreThanOrEqualDate:
+				if len(filter.Value.(string)) == 10 {
+					filterText = filterText + " >= '" + filter.Value.(string) + " 23:59:59'"
+				} else {
+					filterText = filterText + " >= '" + filter.Value.(string) + "'"
+				}
 			}
 		}
 	}
