@@ -19,6 +19,8 @@ const (
 	IsNotIn               Operator = "IS_NOT_IN"
 	IsLessThanOrEqualDate Operator = "IS_LESS_THAN_OR_EQUAL_DATE"
 	IsMoreThanOrEqualDate Operator = "IS_MORE_THAN_OR_EQUAL_DATE"
+	IsNULL                Operator = "IS_NULL"
+	IsNotNULL             Operator = "IS_NOT_NULL"
 )
 
 const (

@@ -128,6 +128,10 @@ func (g *SqlGenerator) ParseFilter(param SelectParameter, tableName string) stri
 				} else {
 					filterText = filterText + " >= '" + filter.Value.(string) + "'"
 				}
+			case IsNULL:
+				filterText = filterText + " IS NULL"
+			case IsNotNULL:
+				filterText = filterText + " IS NOT NULL"
 			}
 		}
 	}
@@ -166,6 +170,10 @@ func (g *SqlGenerator) ParseFilter(param SelectParameter, tableName string) stri
 						filterText = filterText + tableName + "." + item.FieldName + " > " + item.Value.(string)
 					case IsMoreThanOrEqual:
 						filterText = filterText + tableName + "." + item.FieldName + " >= " + item.Value.(string)
+					case IsNULL:
+						filterText = filterText + tableName + "." + item.FieldName + " IS NULL"
+					case IsNotNULL:
+						filterText = filterText + tableName + "." + item.FieldName + " IS NOT NULL"
 					}
 
 					isFirstItem = false
@@ -183,6 +191,10 @@ func (g *SqlGenerator) ParseFilter(param SelectParameter, tableName string) stri
 						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + tableName + "." + item.FieldName + " > " + item.Value.(string)
 					case IsMoreThanOrEqual:
 						filterText = filterText + " " + string(filter.GroupFilterDescriptor.Condition) + " " + tableName + "." + item.FieldName + " >= " + item.Value.(string)
+					case IsNULL:
+						filterText = filterText + tableName + "." + item.FieldName + " IS NULL"
+					case IsNotNULL:
+						filterText = filterText + tableName + "." + item.FieldName + " IS NOT NULL"
 					}
 				}
 			}
