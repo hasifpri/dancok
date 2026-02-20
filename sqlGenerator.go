@@ -124,7 +124,7 @@ func (g *SqlGenerator) ParseFilter(param SelectParameter, tableName string) stri
 				}
 			case IsMoreThanOrEqualDate:
 				if len(filter.Value.(string)) == 10 {
-					filterText = filterText + " >= '" + filter.Value.(string) + " 23:59:59'"
+					filterText = filterText + " >= '" + filter.Value.(string) + " 00:00:00'"
 				} else {
 					filterText = filterText + " >= '" + filter.Value.(string) + "'"
 				}
