@@ -20,7 +20,12 @@ func (g *SqlGenerator) Generate(param SelectParameter, tableName string) (string
 
 	result := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber,* from \"" + g.TableName + "\" " + g.ParseFilter(param, tableName) + ") AS T LIMIT " + limit + " OFFSET " + offset
 
-	resultCount := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber,* from \"" + g.TableName + "\" " + g.ParseFilter(param, tableName) + ") AS T"
+	resultCount := "SELECT COUNT(1) FROM (" +
+		"SELECT * " +
+		" FROM " + g.TableName +
+		") AS T " +
+		g.ParseFilter(param, "T")
+
 	return result, resultCount
 }
 
@@ -34,7 +39,13 @@ func (g *SqlGenerator) GenerateJoin(param SelectParameter, tableName, conditionJ
 
 	result := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + groupByClause + ") AS T " + g.ParseFilter(param, "T") + " LIMIT " + limit + " OFFSET " + offset
 
-	resultCount := "select * from (select ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") as RowNumber," + selectData + " from " + g.TableName + " JOIN " + conditionJoin + groupByClause + ") AS T " + g.ParseFilter(param, "T")
+	resultCount := "SELECT COUNT(1) FROM (" +
+		"SELECT " + selectData +
+		" FROM " + g.TableName +
+		" JOIN " + conditionJoin +
+		") AS T " +
+		g.ParseFilter(param, "T")
+
 	return result, resultCount
 }
 
@@ -61,11 +72,10 @@ func (g *SqlGenerator) GenerateLeftJoin(
 		g.ParseFilter(param, "T") +
 		" LIMIT " + limit + " OFFSET " + offset
 
-	resultCount := "SELECT * FROM (" +
-		"SELECT ROW_NUMBER() OVER(" + g.ParseSort(param, tableName) + ") AS RowNumber, " +
-		selectData + " FROM " + g.TableName +
+	resultCount := "SELECT COUNT(1) FROM (" +
+		"SELECT " + selectData +
+		" FROM " + g.TableName +
 		" LEFT JOIN " + conditionJoin +
-		groupByClause +
 		") AS T " +
 		g.ParseFilter(param, "T")
 
