@@ -43,6 +43,7 @@ func (g *SqlGenerator) GenerateJoin(param SelectParameter, tableName, conditionJ
 		"SELECT " + selectData +
 		" FROM " + g.TableName +
 		" JOIN " + conditionJoin +
+		groupByClause +
 		") AS T " +
 		g.ParseFilter(param, "T")
 
@@ -76,6 +77,7 @@ func (g *SqlGenerator) GenerateLeftJoin(
 		"SELECT " + selectData +
 		" FROM " + g.TableName +
 		" LEFT JOIN " + conditionJoin +
+		groupByClause +
 		") AS T " +
 		g.ParseFilter(param, "T")
 
