@@ -2,7 +2,6 @@ package dancok
 
 import (
 	"fmt"
-	"strconv"
 )
 
 type SqlGenerator struct {
@@ -117,7 +116,7 @@ func (g *SqlGenerator) ParseFilter(param SelectParameter, tableName string) stri
 			case IsMoreThanOrEqual:
 				filterText = filterText + " >= " + filter.Value.(string)
 			case IsContain:
-				filterText = filterText + " LIKE '%" + filter.Value.(string) + "%'"
+				filterText = filterText + " ILIKE '%" + filter.Value.(string) + "%'"
 			case IsBeginWith:
 				filterText = filterText + " LIKE '" + filter.Value.(string) + "%'"
 			case IsEndWith:
@@ -216,19 +215,6 @@ func (g *SqlGenerator) ParseFilter(param SelectParameter, tableName string) stri
 	}
 
 	return filterText
-}
-
-func (g *SqlGenerator) ParsePaging(param SelectParameter) string {
-	pagingText := ""
-
-	if param.PageDescriptor.PageIndex == 0 && param.PageDescriptor.PageSize == 0 {
-		pagingText = ""
-	} else {
-		startRowIndex := (param.PageDescriptor.PageIndex * param.PageDescriptor.PageSize) + 1
-		endRowIndex := (param.PageDescriptor.PageIndex + 1) * param.PageDescriptor.PageSize
-		pagingText = " where RowNumber between " + strconv.FormatInt(int64(startRowIndex), 10) + " and " + strconv.FormatInt(int64(endRowIndex), 10)
-	}
-	return pagingText
 }
 
 func (g *SqlGenerator) ParseSort(param SelectParameter, tableName string) string {
